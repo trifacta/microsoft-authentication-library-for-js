@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const constants = require("constants");
 const base64url = require("base64url");
 
-const jose = require("node-jose");
+const jose = require("jose");
 
 /**
  * utility functions
@@ -492,18 +492,20 @@ exports.decrypt = (jweString, jweKeyStore, log, callback) => {
     cek_result = decryptCEK(header, encrypted_cek, jweKeyStore, log);
     if (cek_result.error) {
       if (cek_result.error === "converting jwk to RSA privatePemKey to decrypt cek") {
-        jose.JWK.asKey(cek_result.cek, "pem").then((pemKey) => {
+        jose.importJWK(cek_result.cek, header.alg).then((keyLike) => {
+          return jose.exportPKCS8(keyLike);
+        }).then((pemKey) => {
           let cek;
           if (header.alg === "RSA1_5")
-            cek = crypto.privateDecrypt({ key: pemKey.toPEM(true), padding: constants.RSA_PKCS1_PADDING }, encrypted_cek);
+            cek = crypto.privateDecrypt({ key: pemKey, padding: constants.RSA_PKCS1_PADDING }, encrypted_cek);
           else if (header.alg === "RSA-OAEP")
-            cek = crypto.privateDecrypt({ key: pemKey.toPEM(true), padding: constants.RSA_PKCS1_OAEP_PADDING }, encrypted_cek);
+            cek = crypto.privateDecrypt({ key: pemKey, padding: constants.RSA_PKCS1_OAEP_PADDING }, encrypted_cek);
           const decryptedPemResult = decryptContent(header, cek, cipherText, iv, authTag, aad, log);
           if (!decryptedPemResult.error) {
             log.info("In jwe.decrypt: successfully decrypted id_token");
           }
           return callback(decryptedPemResult.error, decryptedPemResult.content);
-        });
+        }).catch(callback);
         return;
       }
       return callback(cek_result.error);
