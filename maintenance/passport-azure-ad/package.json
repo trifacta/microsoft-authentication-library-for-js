@@ -1,5 +1,5 @@
 {
-  "name": "passport-azure-ad",
+  "name": "@trifacta/passport-azure-ad",
   "version": "4.3.1",
   "license": "MIT",
   "keywords": [
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:AzureAD/microsoft-authentication-library-for-js.git"
+    "url": "git@github.com:trifacta/microsoft-authentication-library-for-js.git"
   },
   "main": "./lib",
   "devDependencies": {
